@@ -1,6 +1,8 @@
 import numpy as np
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils.class_weight import compute_sample_weight
 
 
 class StaticThresholdBaseline:
@@ -52,3 +54,25 @@ class LogisticRegressionBaseline:
 
     def predict_proba(self, X_features):
         return self.model.predict_proba(self.scaler.transform(X_features))[:, 1]
+
+
+class GradientBoostingModel:
+
+    def __init__(self):
+        self.model = HistGradientBoostingClassifier(
+            max_iter=200, max_depth=6, learning_rate=0.1, random_state=42,
+        )
+
+    def fit(self, X_raw, y):
+        weights = compute_sample_weight("balanced", y)
+        n_pos = y.sum()
+        n_neg = len(y) - n_pos
+        print(f"  Class distribution: {n_neg} neg / {n_pos} pos")
+        print(f"  Weight ratio: {weights[y == 1].mean():.1f}x")
+        self.model.fit(X_raw, y, sample_weight=weights)
+
+    def predict(self, X_raw):
+        return self.model.predict(X_raw)
+
+    def predict_proba(self, X_raw):
+        return self.model.predict_proba(X_raw)[:, 1]
