@@ -2,6 +2,7 @@ import argparse
 import os
 
 from data import generate_series
+from evaluate import plot_confusion_matrix, plot_pr_curves, print_metrics
 from models import GradientBoostingModel, LogisticRegressionBaseline, StaticThresholdBaseline
 from pipeline import create_dataset, extract_features, temporal_split
 
@@ -59,7 +60,20 @@ def main():
         gb.predict_proba(X_test),
     )
 
-    # TODO: evaluation and plotting
+    print("\n" + "=" * 60)
+    pr_results = {}
+    for name, (preds, probs) in models.items():
+        print_metrics(y_test, preds, probs, name)
+        pr_results[name] = (y_test, probs)
+        print()
+
+    plot_pr_curves(pr_results, os.path.join(args.output_dir, "pr_curve.png"))
+    plot_confusion_matrix(
+        y_test, models["Gradient Boosting"][0], "Gradient Boosting",
+        os.path.join(args.output_dir, "confusion_matrix.png"),
+    )
+
+    print(f"\nPlots saved to {args.output_dir}/")
 
 
 if __name__ == "__main__":
