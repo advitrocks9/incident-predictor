@@ -37,6 +37,26 @@ def create_dataset(values, incidents, window_size=50, horizon=10):
     return np.array(windows), np.array(labels), np.array(positions)
 
 
+def extract_features(X_raw):
+    """Compute hand-crafted features from raw windows."""
+    n, w = X_raw.shape
+    features = np.zeros((n, 8))
+    xs = np.arange(w)
+
+    for i, row in enumerate(X_raw):
+        half = w // 2
+        features[i, 0] = row.mean()
+        features[i, 1] = row.std()
+        features[i, 2] = np.polyfit(xs, row, 1)[0]
+        features[i, 3] = row.min()
+        features[i, 4] = row.max()
+        features[i, 5] = row[-1]
+        features[i, 6] = row.max() - row.min()
+        features[i, 7] = row[half:].mean() - row[:half].mean()
+
+    return features
+
+
 def temporal_split(X, y, positions, train_frac=0.7):
     """Split by time, no shuffling."""
     split_idx = int(len(X) * train_frac)

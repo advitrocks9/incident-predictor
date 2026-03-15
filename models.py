@@ -1,0 +1,54 @@
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+
+
+class StaticThresholdBaseline:
+    """Alert if last window value exceeds a learned threshold."""
+
+    def fit(self, X_raw, y):
+        last_vals = X_raw[:, -1]
+        self.min_val_ = last_vals.min()
+        self.max_val_ = last_vals.max()
+
+        candidates = np.percentile(last_vals, np.linspace(70, 99, 50))
+        best_f1, best_thresh = 0, candidates[0]
+
+        for thresh in candidates:
+            preds = (last_vals > thresh).astype(int)
+            tp = ((preds == 1) & (y == 1)).sum()
+            fp = ((preds == 1) & (y == 0)).sum()
+            fn = ((preds == 0) & (y == 1)).sum()
+            prec = tp / (tp + fp) if (tp + fp) > 0 else 0
+            rec = tp / (tp + fn) if (tp + fn) > 0 else 0
+            f1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0
+            if f1 > best_f1:
+                best_f1 = f1
+                best_thresh = thresh
+
+        self.threshold_ = best_thresh
+        print(f"  Static threshold: {self.threshold_:.3f} (F1={best_f1:.3f})")
+
+    def predict(self, X_raw):
+        return (X_raw[:, -1] > self.threshold_).astype(int)
+
+    def predict_proba(self, X_raw):
+        scaled = (X_raw[:, -1] - self.min_val_) / (self.max_val_ - self.min_val_ + 1e-8)
+        return np.clip(scaled, 0, 1)
+
+
+class LogisticRegressionBaseline:
+
+    def __init__(self):
+        self.scaler = StandardScaler()
+        self.model = LogisticRegression(class_weight="balanced", max_iter=1000)
+
+    def fit(self, X_features, y):
+        X_scaled = self.scaler.fit_transform(X_features)
+        self.model.fit(X_scaled, y)
+
+    def predict(self, X_features):
+        return self.model.predict(self.scaler.transform(X_features))
+
+    def predict_proba(self, X_features):
+        return self.model.predict_proba(self.scaler.transform(X_features))[:, 1]
