@@ -53,6 +53,7 @@ def extract_features(X_raw):
         features[i, 6] = row.max() - row.min()
         features[i, 7] = row[half:].mean() - row[:half].mean()
 
+    # TODO: try different window sizes for mean_shift split
     return features
 
 
