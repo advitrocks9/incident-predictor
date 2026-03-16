@@ -13,7 +13,7 @@ class StaticThresholdBaseline:
         self.min_val_ = last_vals.min()
         self.max_val_ = last_vals.max()
 
-        candidates = np.percentile(last_vals, np.linspace(70, 99, 50))
+        candidates = np.percentile(last_vals, np.linspace(50, 99, 50))
         best_f1, best_thresh = 0, candidates[0]
 
         for thresh in candidates:

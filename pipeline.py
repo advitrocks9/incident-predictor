@@ -18,8 +18,7 @@ def create_dataset(values, incidents, window_size=50, horizon=10):
 
     windows, labels, positions = [], [], []
 
-    # BUG: should be n_steps - horizon - 1, not n_steps - 1
-    for t in range(window_size - 1, n_steps - 1):
+    for t in range(window_size - 1, n_steps - horizon - 1):
         w_start = t - window_size + 1
         w_end = t + 1
 
