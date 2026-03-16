@@ -27,7 +27,7 @@ def create_dataset(values, incidents, window_size=50, horizon=10):
         if np.any(is_buffer[w_start:w_end]):
             continue
 
-        label = int(any(s for s in incident_starts if t < s <= t + horizon))
+        label = int(any(t < s <= t + horizon for s in incident_starts))
 
         windows.append(values[w_start:w_end])
         labels.append(label)

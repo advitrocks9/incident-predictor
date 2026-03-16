@@ -1,7 +1,9 @@
 import argparse
 import os
 
-from data import generate_series
+import numpy as np
+
+from data import generate_series, plot_series
 from evaluate import plot_confusion_matrix, plot_pr_curves, print_metrics, threshold_analysis
 from models import GradientBoostingModel, LogisticRegressionBaseline, StaticThresholdBaseline
 from pipeline import create_dataset, extract_features, temporal_split
@@ -34,8 +36,13 @@ def main():
     X_train, X_test, y_train, y_test, _, _ = temporal_split(X, y, positions)
     print(f"Train: {len(y_train)} ({y_train.sum()} pos) | Test: {len(y_test)} ({y_test.sum()} pos)")
 
+    plot_series(data, path=os.path.join(args.output_dir, "series.png"))
+
     feat_train = extract_features(X_train)
     feat_test = extract_features(X_test)
+
+    gb_train = np.hstack([X_train, feat_train])
+    gb_test = np.hstack([X_test, feat_test])
 
     models = {}
 
@@ -54,10 +61,10 @@ def main():
     )
 
     gb = GradientBoostingModel()
-    gb.fit(X_train, y_train)
+    gb.fit(gb_train, y_train)
     models["Gradient Boosting"] = (
-        gb.predict(X_test),
-        gb.predict_proba(X_test),
+        gb.predict(gb_test),
+        gb.predict_proba(gb_test),
     )
 
     print("\n" + "=" * 60)

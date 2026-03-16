@@ -15,21 +15,47 @@ def generate_series(n_steps=5000, n_incidents=20, seed=42):
     for start, end in incidents:
         duration = end - start
 
-        ramp_start = max(0, start - 30)
+        ramp_len = int(rng.integers(15, 35))
+        ramp_mag = rng.uniform(1.3, 2.2)
+
+        ramp_start = max(0, start - ramp_len)
         ramp_length = start - ramp_start
         if ramp_length > 0:
             r = np.linspace(0, 1, ramp_length)
-            signal[ramp_start:start] += r * 1.8
+            signal[ramp_start:start] += r * ramp_mag
             signal[ramp_start:start] += r * rng.normal(0, 0.8, ramp_length)
 
         signal[start:end] += 3.0
         signal[start:end] += rng.normal(0, 0.5, duration)
+
+    _add_false_ramps(rng, signal, incidents, n_steps)
 
     return {
         "values": signal,
         "incidents": incidents,
         "timestamps": np.arange(n_steps),
     }
+
+
+def _add_false_ramps(rng, signal, incidents, n_steps, n_false=3):
+    occupied = np.zeros(n_steps, dtype=bool)
+    for start, end in incidents:
+        lo = max(0, start - 50)
+        hi = min(n_steps, end + 20)
+        occupied[lo:hi] = True
+
+    placed = 0
+    for _ in range(50):
+        if placed >= n_false:
+            break
+        pos = int(rng.integers(100, n_steps - 50))
+        ramp_len = int(rng.integers(15, 30))
+        if np.any(occupied[pos:pos + ramp_len]):
+            continue
+        r = np.linspace(0, 1, ramp_len)
+        signal[pos:pos + ramp_len] += r * rng.uniform(0.5, 1.0)
+        signal[pos:pos + ramp_len] += r * rng.normal(0, 0.5, ramp_len)
+        placed += 1
 
 
 def _place_incidents(rng, n_steps, n_incidents):
