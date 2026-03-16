@@ -7,7 +7,7 @@ def generate_series(n_steps=5000, n_incidents=20, seed=42):
     rng = np.random.default_rng(seed)
     t = np.arange(n_steps, dtype=float)
 
-    signal = 0.5 * np.sin(2 * np.pi * t / 100) + 0.001 * t
+    signal = 0.5 * np.sin(2 * np.pi * t / 100) + 0.0002 * t
     signal += rng.normal(0, 0.3, n_steps)
 
     incidents = _place_incidents(rng, n_steps, n_incidents)
@@ -19,8 +19,8 @@ def generate_series(n_steps=5000, n_incidents=20, seed=42):
         ramp_length = start - ramp_start
         if ramp_length > 0:
             r = np.linspace(0, 1, ramp_length)
-            signal[ramp_start:start] += r * 1.5
-            signal[ramp_start:start] += r * rng.normal(0, 0.3, ramp_length)
+            signal[ramp_start:start] += r * 1.8
+            signal[ramp_start:start] += r * rng.normal(0, 0.8, ramp_length)
 
         signal[start:end] += 3.0
         signal[start:end] += rng.normal(0, 0.5, duration)
@@ -33,15 +33,25 @@ def generate_series(n_steps=5000, n_incidents=20, seed=42):
 
 
 def _place_incidents(rng, n_steps, n_incidents):
-    min_gap = 120
-    max_start = n_steps - 200
+    usable_start = 80
+    usable_end = n_steps - 200
+    segment_len = (usable_end - usable_start) // n_incidents
     incidents = []
 
-    candidate = rng.integers(50, 150)
-    while len(incidents) < n_incidents and candidate < max_start:
+    for i in range(n_incidents):
+        seg_start = usable_start + i * segment_len
+        margin = max(segment_len - 50, 10)
+        offset = int(rng.integers(0, margin))
+        start = seg_start + offset
+
+        if incidents and start < incidents[-1][1] + 30:
+            start = incidents[-1][1] + 30
+
+        if start >= usable_end:
+            break
+
         duration = int(rng.integers(10, 21))
-        incidents.append((candidate, candidate + duration))
-        candidate += duration + min_gap + int(rng.integers(0, 60))
+        incidents.append((start, start + duration))
 
     return incidents
 

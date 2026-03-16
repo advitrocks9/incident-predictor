@@ -2,7 +2,7 @@ import argparse
 import os
 
 from data import generate_series
-from evaluate import plot_confusion_matrix, plot_pr_curves, print_metrics
+from evaluate import plot_confusion_matrix, plot_pr_curves, print_metrics, threshold_analysis
 from models import GradientBoostingModel, LogisticRegressionBaseline, StaticThresholdBaseline
 from pipeline import create_dataset, extract_features, temporal_split
 
@@ -71,6 +71,10 @@ def main():
     plot_confusion_matrix(
         y_test, models["Gradient Boosting"][0], "Gradient Boosting",
         os.path.join(args.output_dir, "confusion_matrix.png"),
+    )
+    threshold_analysis(
+        y_test, models["Gradient Boosting"][1], "Gradient Boosting",
+        path=os.path.join(args.output_dir, "threshold_analysis.png"),
     )
 
     print(f"\nPlots saved to {args.output_dir}/")
